@@ -20,6 +20,7 @@ import queue
 
 from tensorflow.python.client import device_lib
 
+
 print("Python:"+sys.version)
 print("TF:"+tf.__version__)
 print("GPU:"+str(tf.test.is_gpu_available())+" CUDA:"+str(tf.test.is_built_with_cuda()))
@@ -27,6 +28,11 @@ print("GPU:"+str(tf.test.is_gpu_available())+" CUDA:"+str(tf.test.is_built_with_
 import os
 if not os.path.exists('/run/shm/traindata'):
     os.makedirs('/run/shm/traindata')
+
+
+def subprocess_run(cmd,**kw):
+    print('subprocess_run:',cmd)
+    subprocess.run(cmd,**kw)
 ######################################### HYPERPARAMETERS AND CONFIGS #####################################
 
 #Don't touch INPUT_SIZE UNLESS YOU ARE CHANGING THE NN INPUTS DEFINITION. POLICY_SIZE IS THE NUMBER OF LEGAL MOVES ON THE GAME.
@@ -157,6 +163,7 @@ def readAndDeleteWinrate(candidatefile,bestfile):
 
 #It's INCOMPLETE, YOU MUST CREATE YOUR OWN MODEL!!
 #Order is important! You must take into account that this model and C++ counterpart must be synchronized, so layer orders must be the same between languages.
+TODOTODOTODOT = 1
 
 #Input layer
 inputs =  tf.keras.Input(shape=(INPUT_SIZE,), name='input')
@@ -256,11 +263,11 @@ while True:
             p5=MATCHES_PER_GENERATION-p70-p20
             selfplay_process=os.path.join(".","CGZero")+" selfplay "+f"{THREADS} {p70} "+gen_best1+" "+TRAIN_PARAMS+" "+gen_best1+" "+TRAIN_PARAMS
             print(selfplay_process)
-            subprocess.run(selfplay_process, shell=True)
+            subprocess_run(selfplay_process, shell=True)
             if (gen_best1 != gen_best2):
                 selfplay_process=os.path.join(".","CGZero")+" selfplay "+f"{THREADS} {p20} "+gen_best1+" "+TRAIN_PARAMS+" "+gen_best2+" "+TRAIN_PARAMS
                 print(selfplay_process)
-                subprocess.run(selfplay_process, shell=True)
+                subprocess_run(selfplay_process, shell=True)
                 if (p70 >= p20):
                     A=gen_best1 if (gen_best1 >= random_enemy) else random_enemy
                     B=gen_best1 if (A == random_enemy) else random_enemy
@@ -269,11 +276,11 @@ while True:
                     B=gen_best2 if (A == random_enemy) else random_enemy
                 selfplay_process=os.path.join(".","CGZero")+" selfplay "+f"{THREADS} {p5} "+A+" "+TRAIN_PARAMS+" "+B+" "+TRAIN_PARAMS
                 print(selfplay_process)
-                subprocess.run(selfplay_process, shell=True)
+                subprocess_run(selfplay_process, shell=True)
         print('Reading training data')
         # 2- Creates a random sample dataset from selfplay
         print(sampler_process)
-        subprocess.run(sampler_process, shell=True)
+        subprocess_run(sampler_process, shell=True)
         csv_data = np.fromfile(SAMPLES_FILE, dtype=np.float32)
         csv_data=np.reshape(csv_data, (-1,INPUT_SIZE+POLICY_SIZE+2))
         gc.collect()
@@ -317,14 +324,14 @@ while True:
         
     # 5- Pit play vs best1 and best2, promote candidate as best if winrate is good
     pitplay_process=os.path.join(".","CGZero")+" pitplay "+PIT_PARAM_THREAD+" "+gen_name+" "+PIT_PARAM_MCTS+" "+gen_best1+" "+PIT_PARAM_MCTS
-    print('subprocess.run('+pitplay_process+', shell=True)')
-    subprocess.run(pitplay_process, shell=True)
+    print('subprocess_run('+pitplay_process+', shell=True)')
+    subprocess_run(pitplay_process, shell=True)
     pit_winrate=readWinrate(gen_name,gen_best1)
     if gen_best1 == gen_best2:
         pit_winrate2=pit_winrate
     else:
         pitplay_process=os.path.join(".","CGZero")+" pitplay "+PIT_PARAM_THREAD+" "+gen_name+" "+PIT_PARAM_MCTS+" "+gen_best2+" "+PIT_PARAM_MCTS
-        subprocess.run(pitplay_process, shell=True)
+        subprocess_run(pitplay_process, shell=True)
         pit_winrate2=readWinrate(gen_name,gen_best2)
     print('Winrate '+str(pit_winrate)+' '+str(pit_winrate2))
     #Check if it's a new best, update bests

@@ -1,0 +1,7 @@
+*.txt
+*.log
+*.w32
+*.h5
+src/NNSampler
+src/CGZero
+*.dat
